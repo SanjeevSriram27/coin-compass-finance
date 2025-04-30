@@ -1,7 +1,6 @@
 
 import React, { useMemo } from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { CategoryTotal } from '../types/finance';
 
@@ -70,52 +69,46 @@ const ExpenseChart: React.FC = () => {
   };
 
   return (
-    <Card className="animate-fade-in">
-      <CardHeader>
-        <CardTitle className="text-xl font-bold">Expenses by Category</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {expenseData.length > 0 ? (
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={expenseData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  innerRadius={40}
-                  dataKey="amount"
-                  nameKey="category"
-                  labelLine={false}
-                  paddingAngle={2}
-                >
-                  {expenseData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={entry.color}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend 
-                  layout="vertical" 
-                  verticalAlign="middle" 
-                  align="right"
-                  formatter={(value, entry: any) => {
-                    return <span className="text-xs">{value}</span>;
-                  }}
+    <div className="w-full h-full">
+      {expenseData.length > 0 ? (
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={expenseData}
+              cx="50%"
+              cy="50%"
+              outerRadius={80}
+              innerRadius={40}
+              dataKey="amount"
+              nameKey="category"
+              labelLine={false}
+              paddingAngle={2}
+            >
+              {expenseData.map((entry, index) => (
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={entry.color}
                 />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        ) : (
-          <div className="flex items-center justify-center h-64 text-gray-500">
-            No expense data available
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              ))}
+            </Pie>
+            <Tooltip content={<CustomTooltip />} />
+            <Legend 
+              layout="vertical" 
+              verticalAlign="middle" 
+              align="right"
+              formatter={(value, entry: any) => {
+                return <span className="text-xs">{value}</span>;
+              }}
+              wrapperStyle={{ fontSize: '12px', padding: '0 8px' }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="flex items-center justify-center h-full text-gray-500">
+          No expense data available
+        </div>
+      )}
+    </div>
   );
 };
 
