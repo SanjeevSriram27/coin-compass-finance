@@ -14,7 +14,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-const TransactionList: React.FC = () => {
+interface TransactionListProps {
+  showAll?: boolean;
+}
+
+const TransactionList: React.FC<TransactionListProps> = ({ showAll = false }) => {
   const { transactions, deleteTransaction } = useFinance();
   
   const formatDate = (dateString: string) => {
@@ -25,12 +29,14 @@ const TransactionList: React.FC = () => {
     }).format(date);
   };
 
-  const recentTransactions = transactions.slice(0, 5);
+  const displayedTransactions = showAll 
+    ? transactions 
+    : transactions.slice(0, 5);
 
   return (
     <Card className="animate-fade-in">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-xl font-bold">Recent Transactions</CardTitle>
+        <CardTitle className="text-xl font-bold">{showAll ? 'All Transactions' : 'Recent Transactions'}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -45,8 +51,8 @@ const TransactionList: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentTransactions.length > 0 ? (
-                recentTransactions.map((transaction) => (
+              {displayedTransactions.length > 0 ? (
+                displayedTransactions.map((transaction) => (
                   <TransactionRow 
                     key={transaction.id} 
                     transaction={transaction} 
@@ -65,9 +71,11 @@ const TransactionList: React.FC = () => {
           </Table>
         </div>
         
-        {transactions.length > 5 && (
+        {!showAll && transactions.length > 5 && (
           <div className="flex justify-center mt-4">
-            <Button variant="link">View All Transactions</Button>
+            <Button variant="link" asChild>
+              <Link to="/transactions">View All Transactions</Link>
+            </Button>
           </div>
         )}
       </CardContent>
@@ -118,5 +126,8 @@ const TransactionRow: React.FC<TransactionRowProps> = ({
     </TableRow>
   );
 };
+
+// Add the missing import
+import { Link } from 'react-router-dom';
 
 export default TransactionList;

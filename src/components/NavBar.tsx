@@ -10,10 +10,12 @@ import {
   Menu
 } from "lucide-react";
 import { useFinance } from '@/context/FinanceContext';
+import { Link, useLocation } from 'react-router-dom';
 
 const NavBar = () => {
   const { balance } = useFinance();
   const [isOpen, setIsOpen] = React.useState(false);
+  const location = useLocation();
   
   return (
     <div className="flex flex-col">
@@ -47,11 +49,36 @@ const NavBar = () => {
           
           {/* Navigation */}
           <nav className="space-y-1">
-            <NavItem icon={<LayoutDashboard size={18} />} label="Dashboard" isActive />
-            <NavItem icon={<DollarSign size={18} />} label="Transactions" />
-            <NavItem icon={<Target size={18} />} label="Goals" />
-            <NavItem icon={<BarChart3 size={18} />} label="Reports" />
-            <NavItem icon={<Settings size={18} />} label="Settings" />
+            <NavItem 
+              icon={<LayoutDashboard size={18} />} 
+              label="Dashboard" 
+              to="/"
+              isActive={location.pathname === '/'}
+            />
+            <NavItem 
+              icon={<DollarSign size={18} />} 
+              label="Transactions" 
+              to="/transactions"
+              isActive={location.pathname === '/transactions'}
+            />
+            <NavItem 
+              icon={<Target size={18} />} 
+              label="Goals" 
+              to="/goals"
+              isActive={location.pathname === '/goals'}
+            />
+            <NavItem 
+              icon={<BarChart3 size={18} />} 
+              label="Reports" 
+              to="/reports"
+              isActive={location.pathname === '/reports'}
+            />
+            <NavItem 
+              icon={<Settings size={18} />} 
+              label="Settings" 
+              to="/settings"
+              isActive={location.pathname === '/settings'}
+            />
           </nav>
         </div>
       </div>
@@ -70,12 +97,14 @@ const NavBar = () => {
 interface NavItemProps {
   icon: React.ReactNode;
   label: string;
+  to: string;
   isActive?: boolean;
 }
 
-const NavItem = ({ icon, label, isActive }: NavItemProps) => {
+const NavItem = ({ icon, label, to, isActive }: NavItemProps) => {
   return (
-    <button
+    <Link
+      to={to}
       className={`flex items-center space-x-3 w-full p-3 rounded-md transition-colors ${
         isActive 
           ? 'bg-finance-secondary text-white' 
@@ -84,7 +113,7 @@ const NavItem = ({ icon, label, isActive }: NavItemProps) => {
     >
       <span>{icon}</span>
       <span>{label}</span>
-    </button>
+    </Link>
   );
 };
 

@@ -13,10 +13,14 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Target, Plus, Pencil } from 'lucide-react';
+import { Target, Plus, Pencil, Trash2 } from 'lucide-react';
 
-const GoalTracker: React.FC = () => {
-  const { goals, addGoal, updateGoalProgress } = useFinance();
+interface GoalTrackerProps {
+  standalone?: boolean;
+}
+
+const GoalTracker: React.FC<GoalTrackerProps> = ({ standalone = false }) => {
+  const { goals, addGoal, updateGoalProgress, deleteGoal } = useFinance();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -167,6 +171,15 @@ const GoalTracker: React.FC = () => {
                     <span className="text-sm text-gray-500 mr-4">
                       {daysRemaining} days left
                     </span>
+                    {standalone && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => deleteGoal(goal.id)}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    )}
                     <Button variant="ghost" size="icon">
                       <Pencil size={16} />
                     </Button>
@@ -189,6 +202,22 @@ const GoalTracker: React.FC = () => {
                       : "bg-green-500"
                   }
                 />
+                
+                {standalone && (
+                  <div className="flex justify-end mt-2">
+                    <div className="flex space-x-2">
+                      <Input
+                        type="number"
+                        placeholder="Add funds"
+                        className="w-32"
+                        min="1"
+                      />
+                      <Button size="sm">
+                        Add Funds
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })
