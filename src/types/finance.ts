@@ -24,7 +24,7 @@ export interface FinanceContextType {
   balance: number;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
   deleteTransaction: (id: string) => void;
-  addGoal: (goal: Omit<Goal, 'id'>) => void;
+  addGoal: (goal: Omit<Goal, 'id'> & { id?: string }) => void;
   updateGoalProgress: (id: string, amount: number) => void;
   deleteGoal: (id: string) => void;
 }

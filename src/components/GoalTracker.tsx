@@ -14,6 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Target, Plus, Pencil, Trash2 } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
 
 interface GoalTrackerProps {
   standalone?: boolean;
@@ -21,7 +22,12 @@ interface GoalTrackerProps {
 
 const GoalTracker: React.FC<GoalTrackerProps> = ({ standalone = false }) => {
   const { goals, addGoal, updateGoalProgress, deleteGoal } = useFinance();
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const [addFundAmount, setAddFundAmount] = useState<{ [key: string]: string }>({});
+
   const [formData, setFormData] = useState({
     name: '',
     targetAmount: '',
@@ -57,6 +63,82 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ standalone = false }) => {
     });
     
     setOpen(false);
+    toast({
+      title: "Goal Created",
+      description: `${formData.name} goal has been created successfully.`,
+    });
+  };
+
+  const handleEditClick = (goal: any) => {
+    setSelectedGoalId(goal.id);
+    setFormData({
+      name: goal.name,
+      targetAmount: goal.targetAmount.toString(),
+      currentAmount: goal.currentAmount.toString(),
+      deadline: goal.deadline
+    });
+    setEditOpen(true);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.targetAmount || !formData.deadline || !selectedGoalId) {
+      return; // Basic validation
+    }
+    
+    // Delete old goal and add updated one with same ID
+    const updatedGoal = {
+      id: selectedGoalId,
+      name: formData.name,
+      targetAmount: parseFloat(formData.targetAmount),
+      currentAmount: parseFloat(formData.currentAmount),
+      deadline: formData.deadline
+    };
+    
+    deleteGoal(selectedGoalId);
+    addGoal(updatedGoal);
+    
+    // Reset form and state
+    setFormData({
+      name: '',
+      targetAmount: '',
+      currentAmount: '',
+      deadline: ''
+    });
+    setSelectedGoalId(null);
+    setEditOpen(false);
+    
+    toast({
+      title: "Goal Updated",
+      description: `${formData.name} goal has been updated successfully.`,
+    });
+  };
+
+  const handleAddFunds = (goalId: string) => {
+    const amount = parseFloat(addFundAmount[goalId] || '0');
+    
+    if (amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a positive amount.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    updateGoalProgress(goalId, amount);
+    setAddFundAmount(prev => ({ ...prev, [goalId]: '' }));
+    
+    const goalName = goals.find(g => g.id === goalId)?.name || 'Goal';
+    toast({
+      title: "Funds Added",
+      description: `$${amount} has been added to your ${goalName}.`,
+    });
+  };
+
+  const handleAddFundChange = (goalId: string, value: string) => {
+    setAddFundAmount(prev => ({ ...prev, [goalId]: value }));
   };
 
   // Calculate days remaining
@@ -153,6 +235,80 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ standalone = false }) => {
             </form>
           </DialogContent>
         </Dialog>
+        
+        {/* Edit Goal Dialog */}
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Goal</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleEditSubmit} className="space-y-4 mt-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Goal Name</Label>
+                <Input
+                  id="edit-name"
+                  name="name"
+                  placeholder="Vacation Fund"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-targetAmount">Target Amount ($)</Label>
+                <Input
+                  id="edit-targetAmount"
+                  name="targetAmount"
+                  type="number"
+                  placeholder="1000"
+                  min="1"
+                  step="1"
+                  value={formData.targetAmount}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-currentAmount">Current Amount ($)</Label>
+                <Input
+                  id="edit-currentAmount"
+                  name="currentAmount"
+                  type="number"
+                  placeholder="0"
+                  min="0"
+                  step="1"
+                  value={formData.currentAmount}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-deadline">Target Date</Label>
+                <Input
+                  id="edit-deadline"
+                  name="deadline"
+                  type="date"
+                  value={formData.deadline}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setEditOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">Save Changes</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </CardHeader>
       <CardContent className="space-y-4">
         {goals.length > 0 ? (
@@ -180,7 +336,11 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ standalone = false }) => {
                         <Trash2 size={16} />
                       </Button>
                     )}
-                    <Button variant="ghost" size="icon">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleEditClick(goal)}
+                    >
                       <Pencil size={16} />
                     </Button>
                   </div>
@@ -211,8 +371,13 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ standalone = false }) => {
                         placeholder="Add funds"
                         className="w-32"
                         min="1"
+                        value={addFundAmount[goal.id] || ''}
+                        onChange={(e) => handleAddFundChange(goal.id, e.target.value)}
                       />
-                      <Button size="sm">
+                      <Button 
+                        size="sm"
+                        onClick={() => handleAddFunds(goal.id)}
+                      >
                         Add Funds
                       </Button>
                     </div>

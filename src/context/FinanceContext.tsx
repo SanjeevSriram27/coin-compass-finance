@@ -139,13 +139,19 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setTransactions(updatedTransactions);
   };
 
-  // Add a new goal
-  const addGoal = (goal: Omit<Goal, 'id'>) => {
-    const newGoal = {
-      ...goal,
-      id: Math.random().toString(36).substring(2, 9)
-    };
-    const updatedGoals = [...goals, newGoal];
+  // Add a new goal (now with optional ID for edit functionality)
+  const addGoal = (goal: Omit<Goal, 'id'> & { id?: string }) => {
+    const goalWithId = goal.id 
+      ? goal as Goal  // If ID is provided, use it (for edit functionality)
+      : {
+          ...goal,
+          id: Math.random().toString(36).substring(2, 9) // Generate new ID for new goals
+        };
+        
+    const updatedGoals = goal.id 
+      ? [...goals.filter(g => g.id !== goal.id), goalWithId] // Replace existing goal if ID exists
+      : [...goals, goalWithId]; // Add new goal if no ID
+      
     setGoals(updatedGoals);
   };
 
