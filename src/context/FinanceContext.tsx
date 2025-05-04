@@ -155,14 +155,30 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setGoals(updatedGoals);
   };
 
-  // Update goal progress
+  // Update goal progress and create a corresponding transaction
   const updateGoalProgress = (id: string, amount: number) => {
-    const updatedGoals = goals.map(goal =>
-      goal.id === id
-        ? { ...goal, currentAmount: goal.currentAmount + amount }
-        : goal
-    );
-    setGoals(updatedGoals);
+    // First, create a transaction for this contribution
+    const goal = goals.find(g => g.id === id);
+    
+    if (goal) {
+      // Create expense transaction for the goal contribution
+      addTransaction({
+        amount: amount,
+        description: `Contribution to ${goal.name}`,
+        category: 'Savings',
+        date: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD format
+        type: 'expense'
+      });
+      
+      // Update the goal's current amount
+      const updatedGoals = goals.map(g =>
+        g.id === id
+          ? { ...g, currentAmount: g.currentAmount + amount }
+          : g
+      );
+      
+      setGoals(updatedGoals);
+    }
   };
 
   // Delete a goal

@@ -14,14 +14,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Target, Plus, Pencil, Trash2 } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface GoalTrackerProps {
   standalone?: boolean;
 }
 
 const GoalTracker: React.FC<GoalTrackerProps> = ({ standalone = false }) => {
-  const { goals, addGoal, updateGoalProgress, deleteGoal } = useFinance();
+  const { goals, addGoal, updateGoalProgress, deleteGoal, balance } = useFinance();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -127,13 +127,23 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ standalone = false }) => {
       return;
     }
     
+    // Check if there's enough balance for this contribution
+    if (amount > balance) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You don't have enough funds. Current balance: $${balance.toFixed(2)}`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     updateGoalProgress(goalId, amount);
     setAddFundAmount(prev => ({ ...prev, [goalId]: '' }));
     
     const goalName = goals.find(g => g.id === goalId)?.name || 'Goal';
     toast({
       title: "Funds Added",
-      description: `$${amount} has been added to your ${goalName}.`,
+      description: `$${amount} has been added to your ${goalName} and deducted from your balance.`,
     });
   };
 
@@ -311,6 +321,15 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ standalone = false }) => {
         </Dialog>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Display current account balance if in standalone mode */}
+        {standalone && (
+          <div className="mb-6 p-3 bg-gray-50 rounded-md border">
+            <h3 className="text-sm font-semibold text-gray-500">Available Balance</h3>
+            <p className="text-2xl font-bold">${balance.toFixed(2)}</p>
+            <p className="text-xs text-gray-500">Add funds to goals from your main balance</p>
+          </div>
+        )}
+        
         {goals.length > 0 ? (
           goals.map(goal => {
             const progressPercent = Math.min(
@@ -377,6 +396,7 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ standalone = false }) => {
                       <Button 
                         size="sm"
                         onClick={() => handleAddFunds(goal.id)}
+                        disabled={balance <= 0}
                       >
                         Add Funds
                       </Button>
