@@ -2,7 +2,13 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Transaction, Goal, FinanceContextType } from '../types/finance';
 
-// Sample data for initial state
+// Storage keys for localStorage
+const STORAGE_KEYS = {
+  TRANSACTIONS: 'finance_transactions',
+  GOALS: 'finance_goals',
+};
+
+// Sample data for initial state - only used if no data exists in localStorage
 const sampleTransactions: Transaction[] = [
   {
     id: '1',
@@ -63,11 +69,38 @@ const sampleGoals: Goal[] = [
   }
 ];
 
+// Helper function to load data from localStorage
+const loadFromStorage = <T,>(key: string, defaultValue: T): T => {
+  try {
+    const storedData = localStorage.getItem(key);
+    return storedData ? JSON.parse(storedData) : defaultValue;
+  } catch (error) {
+    console.error(`Error loading data from localStorage (${key}):`, error);
+    return defaultValue;
+  }
+};
+
+// Helper function to save data to localStorage
+const saveToStorage = <T,>(key: string, data: T): void => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error(`Error saving data to localStorage (${key}):`, error);
+  }
+};
+
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [transactions, setTransactions] = useState<Transaction[]>(sampleTransactions);
-  const [goals, setGoals] = useState<Goal[]>(sampleGoals);
+  // Load initial data from localStorage or use sample data if not available
+  const [transactions, setTransactions] = useState<Transaction[]>(() => 
+    loadFromStorage(STORAGE_KEYS.TRANSACTIONS, sampleTransactions)
+  );
+  
+  const [goals, setGoals] = useState<Goal[]>(() => 
+    loadFromStorage(STORAGE_KEYS.GOALS, sampleGoals)
+  );
+  
   const [balance, setBalance] = useState<number>(0);
 
   // Calculate balance whenever transactions change
@@ -80,18 +113,30 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setBalance(newBalance);
   }, [transactions]);
 
+  // Save transactions to localStorage whenever they change
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.TRANSACTIONS, transactions);
+  }, [transactions]);
+
+  // Save goals to localStorage whenever they change
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.GOALS, goals);
+  }, [goals]);
+
   // Add a new transaction
   const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
     const newTransaction = {
       ...transaction,
       id: Math.random().toString(36).substring(2, 9)
     };
-    setTransactions([newTransaction, ...transactions]);
+    const updatedTransactions = [newTransaction, ...transactions];
+    setTransactions(updatedTransactions);
   };
 
   // Delete a transaction
   const deleteTransaction = (id: string) => {
-    setTransactions(transactions.filter(transaction => transaction.id !== id));
+    const updatedTransactions = transactions.filter(transaction => transaction.id !== id);
+    setTransactions(updatedTransactions);
   };
 
   // Add a new goal
@@ -100,23 +145,24 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       ...goal,
       id: Math.random().toString(36).substring(2, 9)
     };
-    setGoals([...goals, newGoal]);
+    const updatedGoals = [...goals, newGoal];
+    setGoals(updatedGoals);
   };
 
   // Update goal progress
   const updateGoalProgress = (id: string, amount: number) => {
-    setGoals(
-      goals.map(goal =>
-        goal.id === id
-          ? { ...goal, currentAmount: goal.currentAmount + amount }
-          : goal
-      )
+    const updatedGoals = goals.map(goal =>
+      goal.id === id
+        ? { ...goal, currentAmount: goal.currentAmount + amount }
+        : goal
     );
+    setGoals(updatedGoals);
   };
 
   // Delete a goal
   const deleteGoal = (id: string) => {
-    setGoals(goals.filter(goal => goal.id !== id));
+    const updatedGoals = goals.filter(goal => goal.id !== id);
+    setGoals(updatedGoals);
   };
 
   const value = {

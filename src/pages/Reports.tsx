@@ -121,7 +121,7 @@ const Reports = () => {
         {/* Navigation */}
         <NavBar />
         
-        {/* Main Content - Now wrapped correctly with the provider */}
+        {/* Main Content */}
         <ReportContent />
       </div>
     </FinanceProvider>
